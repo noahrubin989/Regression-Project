@@ -34,15 +34,67 @@ def summarise(data):
     summary.loc['IQR'] = summary.loc['75%'] - summary.loc['25%']
 
     # Use IQR rule to potentially identify univariate outliers
-    summary.loc['Q3 + 1.5*IQR'] = summary.loc['75%'] + (1.5 * summary.loc['IQR'])
-    summary.loc['Q1 - 1.5*IQR'] = summary.loc['25%'] - (1.5 * summary.loc['IQR'])
+    summary.loc['Q3 + 1.5*IQR (INTER QUARTILE RULE)'] = summary.loc['75%'] + (1.5 * summary.loc['IQR'])
+    summary.loc['Q1 - 1.5*IQR (INTER QUARTILE RULE)'] = summary.loc['25%'] - (1.5 * summary.loc['IQR'])
 
     # Empirical Rule
-    summary.loc['mu + 3*sigma'] = summary.loc['mean'] + 3 * summary.loc['std']
-    summary.loc['mu - 3*sigma'] = summary.loc['mean'] - 3 * summary.loc['std']
+    summary.loc['mu + 3*sigma (EMPIRICAL RULE)'] = summary.loc['mean'] + 3 * summary.loc['std']
+    summary.loc['mu - 3*sigma (EMPIRICAL RULE)'] = summary.loc['mean'] - 3 * summary.loc['std']
 
     # Display
     return summary
+
+
+def identify_country_mismatches(train, test, hdi):
+    """
+    A helper function to see if there are any country mismatches between datasets
+    e.g. 'Syria' appearing in the training set but then 'Syrian Arab Republic' appearing in the HDI dataset
+    """
+    train_countries = set(train.Country)
+    test_countries = set(test.Country)
+    hdi_countries = set(hdi.Country)
+
+    print("In train not in hdi")
+    print(train_countries.difference(hdi_countries))
+
+    print()
+
+    print("Geting everything in test not in hdi")
+    print(test_countries.difference(hdi_countries))
+
+
+def search_substrings(hdi_dataset):
+    """
+    Direct follow on from the identify_country_mismatches(...) function.
+    The aim here is to see why/where the country mismatches are occuring
+    """
+
+    correct_names = hdi_dataset['Country'].str.lower().str.contains('russia|cabo|verde|brunei|syria')
+    return f"In the HDI dataset these values show as {hdi_dataset.loc[correct_names, 'Country'].unique()}"
+
+
+def correct_mismatches(train, test):
+
+    train = (
+        train.replace('Russian Federation', 'Russia').
+        replace('Cabo Verde', 'Cape Verde').
+        replace('Brunei Darussalam', 'Brunei').
+        replace('Syrian Arab Republic', 'Syria')
+    )
+
+    # For the testing set
+    test = (
+        test.replace('Russian Federation', 'Russia').
+        replace('Cabo Verde', 'Cape Verde').
+        replace('Brunei Darussalam', 'Brunei').
+        replace('Syrian Arab Republic', 'Syria')
+    )
+
+    return train, test
+
+
+
+
 
 
 def basic_categorical_variable_analysis(data, categorical_feature, fig_s=(12, 5)):
@@ -67,7 +119,7 @@ def basic_categorical_variable_analysis(data, categorical_feature, fig_s=(12, 5)
 
 def show_skewness(data, figsize=(12, 5), style='seaborn-whitegrid'):
 
-    numeric_features = [col for col in data.select_dtypes(include=np.number).columns if col != 'Year']
+    numeric_features = numeric_variables(data)
     new_data = data[numeric_features].copy()
 
     # skew_summary = new_data.skew(numeric_only=True)
@@ -118,7 +170,7 @@ def corr_heatmap(data, method='pearson', figsize=(10, 6), style='seaborn-whitegr
     fig, ax = plt.subplots(figsize=figsize)
     x_labels = y_labels = data.corr().columns
 
-    # Ensures that opnl;y half of the plot shows. Calling our triu function from NumPy
+    # Ensures that only half of the plot shows. Calling our triu function from NumPy
     sns.heatmap(corr, mask=mask, cmap='viridis', xticklabels=x_labels, yticklabels=y_labels, annot=True, ax=ax)
 
 
