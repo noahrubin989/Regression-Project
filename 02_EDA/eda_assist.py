@@ -70,7 +70,7 @@ def search_substrings(hdi_dataset):
     """
 
     correct_names = hdi_dataset['Country'].str.lower().str.contains('russia|cabo|verde|brunei|syria')
-    return f"In the HDI dataset these values show as {hdi_dataset.loc[correct_names, 'Country'].unique()}"
+    return f"\nIn the HDI dataset these values show as {hdi_dataset.loc[correct_names, 'Country'].unique()}"
 
 
 def correct_mismatches(train, test):
