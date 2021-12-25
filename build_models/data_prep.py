@@ -1,15 +1,10 @@
-import pandas as pd
 import numpy as np
-import statsmodels.api as sm
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import GridSearchCV
-from statsmodels.stats import diagnostic as diag
 
 
 def create_pipeline(model):
@@ -44,3 +39,21 @@ def create_pipeline(model):
     steps = [('preprocessor', preprocessor), ('imputation', imp), ('model', model)]
     pipeline_object = Pipeline(steps=steps)
     return pipeline_object
+
+
+def exhaustive_search(X_train, y_train, pipeline_object, param_grid, cv=5, scoring='neg_mean_squared_error'):
+    """
+    :param X_train: feature matrix
+    :param y_train: response Vector
+    :param pipeline_object: the pipeline to eventually pass into GridSearchCV
+    :param param_grid: all the parameters you would like to test out. All combos will be tried
+    :param cv: The value of K for k-fold for cross validation when trying out each parameter combination
+    :param scoring: using mean squared error (sklearn requires 'neg_mean_squared_error')
+    :return: the optimal parameters found, as well as the model itself with all these parameters configured
+    """
+    # Run grid search on our entire preprocessing and model building pipeline
+    grid = GridSearchCV(pipeline_object, param_grid, cv=cv, scoring=scoring).fit(X_train, y_train);
+
+    # Get best parameter combo and the best model (that has all these parameters)
+    return grid.best_estimator_, grid.best_params_
+
