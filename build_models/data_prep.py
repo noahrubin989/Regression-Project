@@ -25,9 +25,6 @@ def create_pipeline(model):
     if isinstance(model, LinearRegression):
         # Apply a log transform to the GDP per capita feature
         numeric_preprocessing = Pipeline(steps=[('logger', FunctionTransformer(np.log))])
-    elif regularised_linear_model:
-        # Scale numeric features
-        numeric_preprocessing = Pipeline(steps=[('ss', StandardScaler())])
     else:
         # Don't log any of the features
         numeric_preprocessing = Pipeline(steps=[('identity', FunctionTransformer(func=None))])
@@ -41,7 +38,11 @@ def create_pipeline(model):
 
     preprocessor = ColumnTransformer(transformers=transformers, remainder='passthrough')
 
-    steps = [('preprocessor', preprocessor), ('imputation', imp), ('model', model)]
+    if regularised_linear_model:
+        steps = [('preprocessor', preprocessor), ('imputation', imp), ('ss', StandardScaler()), ('model', model)]
+    else:
+        steps = [('preprocessor', preprocessor), ('imputation', imp), ('model', model)]
+
     pipeline_object = Pipeline(steps=steps)
     return pipeline_object
 
