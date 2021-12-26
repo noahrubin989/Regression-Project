@@ -2,15 +2,18 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 from sklearn.impute import KNNImputer
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 from statsmodels.stats import diagnostic as diag
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+import joblib
 
 # ======================================================================================================================
 # 1. OLS HELPER FUNCTIONS
 # ======================================================================================================================
+
 
 def apply_preprocessing_steps(X_train, X_test):
     X_train_sm = X_train.copy()
@@ -155,6 +158,19 @@ def make_prediction(input_list, pipeline, x_test):
     prediction_input = pd.DataFrame([input_list], columns=x_test.columns)
     prediction_output = pipeline.predict(prediction_input)[0]
     return prediction_output
+
+
+def display_regression_metrics(y_actual, y_pred):
+    r2 = r2_score(y_actual, y_pred)
+    mse = mean_squared_error(y_actual, y_pred)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_actual, y_pred)
+    print(f"R^2 = {r2}\nMean Squared Error = {mse}\nRoot Mean Squared Error = {rmse}\nMean Absolute Error = {mae}")
+    return r2, mse, rmse, mae
+
+
+
+
 
 
 

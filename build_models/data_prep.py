@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.impute import KNNImputer
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.compose import ColumnTransformer
@@ -20,14 +20,14 @@ def create_pipeline(model):
     # - Initialise model object
     """
     imp = KNNImputer()
-    linear_model = (isinstance(model, LinearRegression)
-                    or isinstance(model, Ridge)
-                    or isinstance(model, Lasso)
-                    or isinstance(model, ElasticNet))
-    
-    if linear_model:
+    regularised_linear_model = (isinstance(model, Ridge) or isinstance(model, Lasso) or isinstance(model, ElasticNet))
+
+    if isinstance(model, LinearRegression):
         # Apply a log transform to the GDP per capita feature
         numeric_preprocessing = Pipeline(steps=[('logger', FunctionTransformer(np.log))])
+    elif regularised_linear_model:
+        # Scale numeric features
+        numeric_preprocessing = Pipeline(steps=[('ss', StandardScaler())])
     else:
         # Don't log any of the features
         numeric_preprocessing = Pipeline(steps=[('identity', FunctionTransformer(func=None))])
