@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import GridSearchCV
 
@@ -20,7 +20,12 @@ def create_pipeline(model):
     # - Initialise model object
     """
     imp = KNNImputer()
-    if isinstance(model, LinearRegression):
+    linear_model = (isinstance(model, LinearRegression)
+                    or isinstance(model, Ridge)
+                    or isinstance(model, Lasso)
+                    or isinstance(model, ElasticNet))
+    
+    if linear_model:
         # Apply a log transform to the GDP per capita feature
         numeric_preprocessing = Pipeline(steps=[('logger', FunctionTransformer(np.log))])
     else:
