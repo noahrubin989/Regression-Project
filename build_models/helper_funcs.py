@@ -3,14 +3,10 @@ import numpy as np
 import statsmodels.api as sm
 from sklearn.impute import KNNImputer
 from scipy import stats
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import GridSearchCV
 from statsmodels.stats import diagnostic as diag
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # ======================================================================================================================
 # 1. OLS HELPER FUNCTIONS
@@ -42,8 +38,19 @@ def apply_preprocessing_steps(X_train, X_test):
 
 
 # ======================================================================================================================
-#                                                   Diagnostics
+#                                                   OLS Model Diagnostics
 # ======================================================================================================================
+
+def adjusted_r2(model, x_test, y_test):
+    """Calculates adjusted R^2"""
+    n = len(y_test)
+    k = len(x_test.columns)
+    r2 = model.score(x_test, y_test)
+    numerator = (1 - r2) * (n-1)
+    denominator = n - k - 1
+    return 1 - (numerator / denominator)
+
+
 def test_heteroskedasticity(fitted_model, alpha=0.05):
     """
     :param fitted_model: An already fitted model ready to plot out and run tests on
@@ -70,8 +77,9 @@ def check_residual_normality(fitted_model, residual_data):
     # Calculate test statistic and p_value for the KS test
     d_statistic, p_value = stats.kstest(fitted_model.resid, 'norm')
 
-    print(f"D: {d_statistic}\n")
-
+    print("Kolmogorov Smirnov test results:")
+    print("-" * 35)
+    print(f"D-statistic: {d_statistic}")
     print(f"p-value: {p_value}")
 
     if p_value <= 0.05:
@@ -102,7 +110,51 @@ def check_residual_normality(fitted_model, residual_data):
 
     ax2.set(title='Density curve');
     ax2.grid(False)
-    ax2.legend(loc='upper left', fontsize=14);
+    ax2.legend(loc='upper left', fontsize=10);
+
+
+def display_vif(feature_matrix, threshold=5):
+    """
+    This function calculates the variance inflation factor for
+    our x variables (covariates), returning a graph.
+
+    A variance inflation factor over 5 is a sign
+    that multicoliniarity exists.
+
+    Simply pass in all of your covariates for the feature_marix argument as a dataframe
+    """
+
+    # We have to manually add the constant term
+    x_new = sm.tools.add_constant(feature_matrix)
+
+    # Calculating VIF
+    vif = pd.DataFrame({'Variable': x_new.columns,
+                        'VIF': [variance_inflation_factor(x_new.values, exog_idx=i) for i in range(x_new.shape[1])]})
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    # Our VIF calculation has the VIF of the constant term but we typically don't consider it
+    # ...(hence the iloc[1:, :] on the line below)
+    vif_plot = vif.iloc[1:, :].plot(ax=ax,
+                                    kind='bar',
+                                    x='Variable',
+                                    y='VIF',
+                                    color='blue',
+                                    edgecolor='black',
+                                    title='VIF for Each Predictor Variable',
+                                    ylabel='VIF')
+
+    ax.axhline(y=threshold, color='r', linestyle='-.', label=f'VIF Threshold = {threshold}')
+    ax.legend(fontsize='large', loc='best')
+    ax.grid(False)
+
+    return vif_plot
+
+
+def make_prediction(input_list, pipeline, x_test):
+    prediction_input = pd.DataFrame([input_list], columns=x_test.columns)
+    prediction_output = pipeline.predict(prediction_input)[0]
+    return prediction_output
 
 
 
