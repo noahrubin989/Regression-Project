@@ -4,7 +4,7 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardSc
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 
 def create_pipeline(model):
@@ -62,4 +62,31 @@ def exhaustive_search(X_train, y_train, pipeline_object, param_grid, cv=5, scori
 
     # Get best parameter combo and the best model (that has all these parameters)
     return grid.best_estimator_, grid.best_params_
+
+
+def randomised_search_wrapper(x_train, y_train, pipe, param_grid, n_iter=20, scoring='neg_mean_squared_error', cv=5):
+    randomised_search = RandomizedSearchCV(estimator=pipe,
+                                           param_distributions=param_grid,
+                                           n_iter=n_iter,
+                                           cv=cv,
+                                           scoring=scoring,
+                                           random_state=3,
+                                           n_jobs=-1).fit(x_train, y_train)
+
+    best_estimator = randomised_search.best_estimator_
+    best_params = randomised_search.best_params_
+
+    final_model = best_estimator.fit(x_train, y_train)
+
+    print(f"Best Parameters were...")
+    for key, value in best_params.items():
+        print(f"{key} had optimal value as: {value}")
+
+    print("\nThe fitted model you just initialised now has all these parameters set up")
+
+    return final_model
+
+
+
+
 

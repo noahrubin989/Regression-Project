@@ -161,6 +161,7 @@ def make_prediction(input_list, pipeline, x_test):
 
 
 def display_regression_metrics(y_actual, y_pred):
+    print("All metrics are in terms of the unseen test set\n")
     r2 = r2_score(y_actual, y_pred)
     mse = mean_squared_error(y_actual, y_pred)
     rmse = np.sqrt(mse)
