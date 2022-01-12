@@ -83,13 +83,13 @@ def randomised_search_wrapper(x_train, y_train, pipe, param_grid, n_iter=20, sco
 
     final_model = best_estimator.fit(x_train, y_train)
 
-    print(f"Best Parameters were...")
+    print(f"\nBest Parameters were...\n")
     for key, value in best_params.items():
         print(f"{key} had optimal value as: {value}")
 
     print("\nThe fitted model just initialised now has all these parameters set up")
 
-    return final_model
+    return final_model, best_params
 
 
 
